@@ -52,22 +52,18 @@ class CPU:
             "10101011": {"type": 2, "code": "XOR"},
         }
 
-    def load(self):
+    def load(self, file):
         """Load a program into memory."""
 
-        # For now, we've just hardcoded a program:
+        program = None
 
-        program = [
-            # From print8.ls8
-            0b10000010,  # LDI R0,8
-            0b00000000,
-            0b00001000,
-            0b01000111,  # PRN R0
-            0b00000000,
-            0b00000001,  # HLT
-        ]
+        with open(file) as f:
+            program = f.readlines()
 
         for instruction in program:
+            if "#" in instruction:
+                instruction = instruction[: instruction.index("#")].strip()
+
             self.ram[self.address] = instruction
             self.address += 1
 
@@ -75,11 +71,13 @@ class CPU:
         """ALU operations."""
 
         if op == "ADD":
-            self.reg[reg_a] += self.reg[reg_b]
+            self.r[reg_a] += self.r[reg_b]
         elif op == "LDI":
             self.r[reg_a] = reg_b
         elif op == "PRN":
             print(self.r[reg_a])
+        elif op == "MUL":
+            self.r[reg_a] = self.r[reg_a] * self.r[reg_b]
         else:
             raise Exception("Unsupported ALU operation")
 
@@ -110,18 +108,18 @@ class CPU:
     def run(self):
         """Run the CPU."""
         while self.pc <= self.address:
-            ir = bin(self.ram_read(self.pc))[2:].zfill(8)  # binary
-            operand_a = self.ram_read(self.pc + 1)
-            operand_b = self.ram_read(self.pc + 2)
-
+            ir = self.ram_read(self.pc)
             objMap = self.opcodes[ir]
             op = objMap["code"]
 
-            if op != "HLT":
-                self.alu(op, operand_a, operand_b)
-                self.pc += 1 + objMap["type"]
-            else:
+            if op == "HLT":
                 return
+
+            operand_a = int(self.ram_read(self.pc + 1), 2)
+            operand_b = int(self.ram_read(self.pc + 2), 2)
+
+            self.alu(op, operand_a, operand_b)
+            self.pc += 1 + objMap["type"]
 
     def ram_read(self, address):
         return self.ram[address]
