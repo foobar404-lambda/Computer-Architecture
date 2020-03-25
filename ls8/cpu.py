@@ -11,8 +11,8 @@ class CPU:
         self.ram = [0] * 256
         self.r = [0] * 8
         self.pc = 0
-        self.fl = [0] * 8
         self.address = 0
+        self.stack = []
 
         # Opcodes
         self.opcodes = {
@@ -78,6 +78,10 @@ class CPU:
             print(self.r[reg_a])
         elif op == "MUL":
             self.r[reg_a] = self.r[reg_a] * self.r[reg_b]
+        elif op == "PUSH":
+            self.stack.append(self.r[reg_a])
+        elif op == "POP":
+            self.r[reg_a] = self.stack.pop()
         else:
             raise Exception("Unsupported ALU operation")
 
