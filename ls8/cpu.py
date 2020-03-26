@@ -61,10 +61,12 @@ class CPU:
             program = f.readlines()
 
         for instruction in program:
+            if instruction.strip().startswith("#"):
+                continue
             if "#" in instruction:
-                instruction = instruction[: instruction.index("#")].strip()
+                instruction = instruction[: instruction.index("#")]
 
-            self.ram[self.address] = instruction
+            self.ram[self.address] = instruction.strip()
             self.address += 1
 
     def alu(self, op, reg_a, reg_b):
@@ -82,6 +84,11 @@ class CPU:
             self.stack.append(self.r[reg_a])
         elif op == "POP":
             self.r[reg_a] = self.stack.pop()
+        elif op == "CALL":
+            self.stack.append(self.pc)
+            self.pc = self.r[reg_a]
+        elif op == "RET":
+            self.pc = self.stack.pop()
         else:
             raise Exception("Unsupported ALU operation")
 
@@ -119,11 +126,16 @@ class CPU:
             if op == "HLT":
                 return
 
-            operand_a = int(self.ram_read(self.pc + 1), 2)
-            operand_b = int(self.ram_read(self.pc + 2), 2)
+            operand_a = None
+            if self.pc + 1 < self.address:
+                operand_a = int(self.ram_read(self.pc + 1), 2)
 
-            self.alu(op, operand_a, operand_b)
+            operand_b = None
+            if self.pc + 2 < self.address:
+                operand_b = int(self.ram_read(self.pc + 2), 2)
+
             self.pc += 1 + objMap["type"]
+            self.alu(op, operand_a, operand_b)
 
     def ram_read(self, address):
         return self.ram[address]
