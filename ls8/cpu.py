@@ -13,6 +13,7 @@ class CPU:
         self.pc = 0
         self.address = 0
         self.stack = []
+        self.flags = [0] * 3
 
         # Opcodes
         self.opcodes = {
@@ -65,6 +66,8 @@ class CPU:
                 continue
             if "#" in instruction:
                 instruction = instruction[: instruction.index("#")]
+            if instruction.strip() == "":
+                continue
 
             self.ram[self.address] = instruction.strip()
             self.address += 1
@@ -89,6 +92,37 @@ class CPU:
             self.pc = self.r[reg_a]
         elif op == "RET":
             self.pc = self.stack.pop()
+        elif op == "JMP":
+            self.pc = self.r[reg_a]
+        elif op == "PRA":
+            print(str(self.r[reg_a]))
+        elif op == "ST":
+            self.ram[self.r[reg_a]] = self.r[reg_b]
+        elif op == "CMP":
+            if self.r[reg_a] == self.r[reg_b]:
+                self.flags[2] = 1
+            else:
+                self.flags[2] = 0
+
+            if self.r[reg_a] < self.r[reg_b]:
+                self.flags[0] = 1
+            else:
+                self.flags[0] = 0
+
+            if self.r[reg_a] > self.r[reg_b]:
+                self.flags[1] = 1
+            else:
+                self.flags[1] = 0
+        elif op == "JEQ":
+            if self.flags[2] == 1:
+                self.pc = self.r[reg_a]
+        elif op == "JNE":
+            if self.flags[2] == 0:
+                self.pc = self.r[reg_a]
+        elif op == "DEC":
+            self.r[reg_a] -= 1
+        elif op == "LD":
+            self.r[reg_a] = self.ram[self.r[reg_b]]
         else:
             raise Exception("Unsupported ALU operation")
 
